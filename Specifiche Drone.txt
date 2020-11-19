@@ -1,0 +1,38 @@
+	Utilità
+
+Tipo punti presenti sulla mappa		
+
+- Ostacoli insormontabili (Case, Palazzi ecc.)	
+- No fly zones					
+- Punti percorribili						
+- Stazioni di Ricarica			
+- Altitudine minima richiesta		
+- Zona possibili intereferenze		
+- Zone affolate				
+
+Batteria Residua
+
+- Batteria maggiore uguale a 70
+- Batteria minore uguale a 30
+- Batteria tra 70 e 30
+
+Tempo Massimo (Percorso breve)
+
+- Iniziato da 15 minuti
+- Iniziato da 30 minuti
+- Iniziato da 45 minuti
+
+
+Caratteristiche Desiderabili
+
+- Percorso più breve
+- 60 Minuti max
+- 40 KM distanza massima (Con ipotesi velocità costante 60km/h)
+- Arrivare con almeno il 40% della ricarica se nel percorso c'è almeno una stazione di ricarica
+- Arrivare con almeno il 60% della ricarica se nel percorso non c'è almeno una stazione di ricarica
+- Cambi di altitudine influenza consumo energia
+
+Caratteristiche Generali Droni
+
+- Velocità in media dei droni: 80km/h
+- Altitudine massima 25 metri

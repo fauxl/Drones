@@ -47,6 +47,7 @@ class spot:
 
         self.parent = None          # To trace back the path, we need to record parents
         self.wall = False           # spot obstacle set false
+        
         self.neighbors = []         # list of neighbors of a spot              
        
         if random.random() < 0.4:   # Percentage of obstacles or not linked spots generated randomly
@@ -178,4 +179,5 @@ plt.figure(figsize =(8, 7))
 plt.title('A* Algorithm - Shortest Path Finder\n')
 plt.imshow(vis_grid)
 plt.show()
+
 
