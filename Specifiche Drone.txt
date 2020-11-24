@@ -12,15 +12,15 @@ Tipo punti presenti sulla mappa
 
 Batteria Residua
 
-- Batteria maggiore uguale a 70
-- Batteria minore uguale a 30
-- Batteria tra 70 e 30
+- Batteria maggiore uguale a 70, stimata essere in 20 blocchi percorsi
+- Batteria minore uguale a 30, stimato essere in 50 blocchi percorsi
+- Batteria tra 70 e 30, stimato essere tra i 20 e i 50 blocchi percorsi
 
 Tempo Massimo (Percorso breve)
 
-- Iniziato da 15 minuti
-- Iniziato da 30 minuti
-- Iniziato da 45 minuti
+- Iniziato da 15 minuti o meno, stimata essere in 20 blocchi percorsi o meno
+- Iniziato tra i 15 e 45 min,  stimato essere tra i 20 e i 50 blocchi percorsi
+- Iniziato da 45 minuti o più (max 60 min), stimato essere tra 50 blocchi percorsi o più
 
 
 Caratteristiche Desiderabili

@@ -4,31 +4,38 @@ import numpy as np
 import random
 import math
 
-"""
-Spots type on the map		       Normalized Utility Scores            Probability
-
-- Recharge Station  				            1                           0.1                   
-- Walkable spots    				           0.9			                0.4
-- Minimum altitude specification	   	       0.7                          0.15
-- Interferences zones       			       0.3                          0.05
-- Crowded zones 				               0.5                          0.1
-- Obstacles/No fly zones                        0                           0.2     Utility is equal to 0 can be ignored
-
-Drone Battery       		       Normalized Utility Scores            Probability
-
-- Battery above or equal 70%  				        1                       0.33                  
-- Battery under or equal 30%    				   0.3			            0.33
-- Battery between 70% -  30%    		   	       0.6                      0.34
-
-Time Elapsed           		       Normalized Utility Scores            Probability
-
-- Started from 15 min        				        1                       0.33                  
-- Started from 30 min              				   0.6			            0.33
-- Started from 45 min           		   	       0.3                      0.34
-
+#import Route
 
 """
+Spots type on the map	(DECIDE)       Normalized Utility Scores Base         Probability of presence on the map
 
+- Recharge Station  				    1                           0.1                   
+- Walkable spots    				   0.9			        0.4
+- Minimum altitude specification	   	   0.7                         0.15
+- Interferences zones       			   0.3                         0.05
+- Crowded zones 				   0.5                          0.1
+- Obstacles/No fly zones                            0                           0.2     Utility is equal to 0 can be ignored
+
+
+Drone Battery       		       Normalized Utility Scores          
+
+From 100% to 5%  			        0 to 1		                Each block percentage down by one                     
+if less then 5 then failed		      			
+ 		   	                         
+
+Time Elapsed           		       Normalized Utility Scores            
+
+From 0 to 85 min     			        0 to 1			         Each block time up 1 min
+if more then 85 then failed         		   	                        
+
+
+Distance from target (A*)
+
+From 0 to max length                            0 to 1                            Estimated with an euristich function  A*
+
+"""
+
+"utility obtained by "
 
 # Utility Function 
 class UtilityAgent:
@@ -46,34 +53,57 @@ class UtilityAgent:
 
         eus = (ws*pws) + (rs*prs) + (mas*pmas) + (cwz*pcwz) + (inz*pinz)
 
-        print(eus)
+        #print(eus)
 
-        b70 = 1
-        b30 = 0.3
-        b37 = 0.6
-
-        pb70 = 0.33
-        pb30 = 0.33
-        pb37 = 0.34
-
-        eub = (b70*pb70) + (b30*pb30) + (b37*pb37) 
-
-        print(eub)
-
-        t15 = 1
-        t30 = 0.6
-        t45 = 0.3
-
-        pt15 = 0.33
-        pt30 = 0.33
-        pt45 = 0.34
-
-        eut = (t15*pt15) + (t30*pt30) + (t45*pt45) 
-
-        print(eut)
-
-
-
+      
+class Drone:
+        def __init__(self):
+                self.i = 0
+                self.j = 0
+                self.type=type
+                self.battery = 1
+                self.time = 1
+                self.distance = 1 #per funzione di ottimizazzione parte da 1 e arriva a 0
         
+        def move(self,i,j,battery, time, distance):
+                self.i = i
+                self.j = j
+                self.battery = battery
+                self.time = time
+                self.distance = distance
 
 
+def Weight(drone):
+        weiba = (2-drone.battery)*0.35
+        weita = (2-drone.time)*0.35
+
+        weiba = (0.7*weiba)/(weiba+weita)
+        weita = (0.7*weita)/(weiba+weita)
+
+def UtilityFunc(drone,weiba,weita):
+                 uf = (weiba*drone.battery + weita*drone.time+ 0.30*drone.distance)*drone.type
+                 return uf
+
+
+
+"""
+1. Imposta le variabili di prova per lo stato corrente.
+2. Per ogni possibile valore del nodo di decisione:
+a. assegna tale valore al nodo di decisione;
+b. calcola le probabilità a posteriori dei nodi genitori del nodo di
+utilità con un algoritmo standard di inferenza probabilistica;
+c. calcola l’utilità risultante dell’azione.
+3. Restituisci l’azione con utilità più alta.
+
+
+int node = #a seconda del valore asssegnato si indica una delle tipologie di celle
+ probgen
+utility
+start = True
+       while (start) {
+               if (utility<newutility)
+                        utility = newutility 
+       } 
+
+
+"""""

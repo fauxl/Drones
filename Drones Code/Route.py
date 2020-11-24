@@ -148,6 +148,7 @@ while loop:
                         openSet.append(neighbor)
                     if new_path:
                         neighbor.h = heuristic(neighbor, end)
+                        print(heuristic(neighbor,end))
                         neighbor.f = neighbor.g + neighbor.h
                         neighbor.parent = current
 
