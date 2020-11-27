@@ -9,11 +9,11 @@ import math
 """
 Spots type on the map	(DECIDE)       Normalized Utility Scores Base         Probability of presence on the map
 
-- Recharge Station  				    1                           0.1                   
-- Walkable spots    				   0.9			        0.4
-- Minimum altitude specification	   	   0.7                         0.15
-- Interferences zones       			   0.3                         0.05
-- Crowded zones 				   0.5                          0.1
+- Recharge Station  				    0.9                                 0.1                   
+- Walkable spots    				    1    			        0.4
+- Minimum altitude specification	   	   0.7                                  0.15
+- Interferences zones       			   0.3                                  0.05
+- Crowded zones 				   0.5                                  0.1
 - Obstacles/No fly zones                            0                           0.2     Utility is equal to 0 can be ignored
 
 
@@ -57,13 +57,12 @@ class UtilityAgent:
 
       
 class Drone:
-        def __init__(self):
+        def __init__(self,battery,time,distance):
                 self.i = 0
                 self.j = 0
-                self.type=type
-                self.battery = 1
-                self.time = 1
-                self.distance = 1 #per funzione di ottimizazzione parte da 1 e arriva a 0
+                self.battery = battery
+                self.time = time
+                self.distance = distance #per funzione di ottimizazzione parte da 1 e arriva a 0
         
         def move(self,i,j,battery, time, distance):
                 self.i = i
@@ -71,19 +70,24 @@ class Drone:
                 self.battery = battery
                 self.time = time
                 self.distance = distance
-
+                #print(self.i,self.j,self.battery,self.time,self.distance)
 
 def Weight(drone):
         weiba = (2-drone.battery)*0.35
         weita = (2-drone.time)*0.35
 
-        weiba = (0.7*weiba)/(weiba+weita)
-        weita = (0.7*weita)/(weiba+weita)
+        weiba = round(((0.7*weiba)/(weiba+weita)),2)
+        #print(weiba)
+        #weiba = weiba + round(0.01*((2-drone.battery)),2)
+        weita = round(0.7-weiba,2)
+        
+        #print(weiba,weita)
+        return weiba, weita
 
-def UtilityFunc(drone,weiba,weita):
-                 uf = (weiba*drone.battery + weita*drone.time+ 0.30*drone.distance)*drone.type
-                 return uf
-
+def UtilityFunc(kind,battery,time,distance,weight):
+        #print(weight[0],weight[1],time,battery,kind)
+        uf = (weight[0]*battery + weight[1]*time+ 0.30*distance + kind)
+        return uf
 
 
 """
