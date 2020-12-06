@@ -1,0 +1,18 @@
+Idee:
+
+- Mappa venti rilevare zone tramite machine learning e dati sulle piogge
+
+- Prevedere quanto pioverà e vento 
+
+- Copertura di rete, calcolare posizione migliore
+
+- Individuazione di droni sempre per calcolo copertura && Probabilità Ostacoli
+
+- Studio su Interferenze
+
+- Script con possibili pattern e utilità
+
+- Eventuali implicazioni di Machine learning
+
+- Non si può usare markov perchè importano gli stati precedenti poichè questi influiscono sulla batteria e sul tempo
+

@@ -1,0 +1,15 @@
+- Utilità della casella? 
+
+- Sommatoria Normalizzata dell'utilità di ogni singola casella moltiplicata per la probabilità che ci si passsi.
+
+- Probabilità di selezionare un opzione è data dall'Utilità divisa per la sommatoria dell'utilità di tutte le opzioni.
+
+- Devono essere valutati i possibili esiti della lotteria che viene inteso non solo come la casella dove spostarsi
+ma lo stato totale una volta scelta quella casella.
+
+- Probabilità deve essere calcolata tramite quella condizionata dall'esecuzione della azione e di come si trova il mondo 
+dopo che quell'azione è stata eseguita
+		
+	P(Risultato(A)|Do(A),E)
+
+

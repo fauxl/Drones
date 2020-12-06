@@ -1,0 +1,9 @@
+1 - Il peso assegnato a ciascuna cella influisce troppo sulla scelta da far effettuare al drone che preferisce quindi celle libere
+anche se molto più distanti dal traguardo; -- Rivedere funzione calcolo utilità but maybe resolved
+
+2 - Più ci si avvicina al traguardo, più dovrebbe avere peso la distanza in modo da accellerare il processo di ricerca della strada (operare su h)
+
+3 - Bisogna gestire meglio la questione dei pesi per tempo e batteria //maybe resolved
+
+4 - Valutare l'aumento del livello di batteria nei percorsi che prevedono la presenza di una stazione di ricarica
+

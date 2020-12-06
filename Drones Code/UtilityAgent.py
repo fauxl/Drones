@@ -1,4 +1,3 @@
-from lxml import etree
 import matplotlib.pyplot as plt
 import numpy as np
 import random
@@ -35,7 +34,7 @@ From 0 to max length                            0 to 1                          
 
 """
 
-"utility obtained by "
+"""
 
 # Utility Function 
 class UtilityAgent:
@@ -54,7 +53,7 @@ class UtilityAgent:
         eus = (ws*pws) + (rs*prs) + (mas*pmas) + (cwz*pcwz) + (inz*pinz)
 
         #print(eus)
-
+"""
       
 class Drone:
         def __init__(self,battery,time,distance):
@@ -72,22 +71,24 @@ class Drone:
                 self.distance = distance
                 #print(self.i,self.j,self.battery,self.time,self.distance)
 
-def Weight(drone):
-        weiba = (2-drone.battery)*0.35
-        weita = (2-drone.time)*0.35
+def Weight(battery,time):
+        weiba = (2-battery)*0.35
+        weita = (2-time)*0.35
 
-        weiba = round(((0.7*weiba)/(weiba+weita)),2)
+        weiba = 0.6*weiba/(weiba+weita)
         #print(weiba)
-        #weiba = weiba + round(0.01*((2-drone.battery)),2)
-        weita = round(0.7-weiba,2)
+        #weiba = weiba + round(0.01*((2-.battery)),2)
+        weita = 0.6-weiba
         
         #print(weiba,weita)
         return weiba, weita
 
 def UtilityFunc(kind,battery,time,distance,weight):
         #print(weight[0],weight[1],time,battery,kind)
-        uf = (weight[0]*battery + weight[1]*time+ 0.30*distance + kind)
-        return uf
+        #uf = (weight[0]*battery + weight[1]*time+ 0.30*distance + kind)
+        world = (weight[0]*battery + weight[1]*time+ 0.40*distance)
+        eu = world*kind
+        return round(eu,2)
 
 
 """

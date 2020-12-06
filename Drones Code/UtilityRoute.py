@@ -1,4 +1,3 @@
-from lxml import etree
 import matplotlib.pyplot as plt
 import numpy as np
 import random
@@ -7,6 +6,7 @@ import matplotlib as mpl
 
 from UtilityAgent import *
 
+from Graphics import *
 
 # Usually data model for maps is G(N,E) 
 # N are the nodes, in this case ID
@@ -49,10 +49,12 @@ class spot:
         self.f = 0      # f is the cost function f = g+h
         self.g = 0      # g is like the actual distance from the starting point to the node we are
         self.h = 0      # h is the heuristic - estimates the distance from the node we are to the end for each possibile node - here it has been used euclidean distance
-        self.bat = 0
-        self.tim = 0
+        self.bat = 1
+        self.tim = 1
         self.value = 1
         self.utility=0
+        self.weiba = 0
+        self.weita = 0
 
         self.parent = None          # To trace back the path, we need to record parents
         self.wall = False           # spot obstacle set false
@@ -63,7 +65,7 @@ class spot:
 
         self.neighbors = []         # list of neighbors of a spot              
        
-        if random.random() < 0.02:   # Percentage of obstacles or not linked spots generated randomly
+        if random.random() < 0.001:   # Percentage of obstacles or not linked spots generated randomly
             if self.value==1:
                 self.recharge = True
                 self.value=0.9
@@ -73,7 +75,7 @@ class spot:
                 self.altitud= True
                 self.value=0.7
 
-        if random.random() < 0.05:   # Percentage of obstacles or not linked spots generated randomly
+        if random.random() < 0.099:   # Percentage of obstacles or not linked spots generated randomly
             if self.value==1:
                 self.interf= True
                 self.value=0.3
@@ -110,10 +112,15 @@ class spot:
         if i > 0 and j > 0:
             self.neighbors.append(grid_passed[i - 1][j - 1])
 
-size = 50
+size = 100
 grid = []
 openSet = []
 closedSet = []
+BatteryValues = []
+TimeValues = []
+WeibaValues = []
+WeitaValues = []
+
 
 # Heuristic Euclidean Distance
 def heuristic(a, b):                                   
@@ -136,7 +143,7 @@ for i in range(size):
         grid[i][j].add_neighbors(grid)
 
         
-start = grid[int(random.random()*40)][int(random.random()*40)]  # Start can be randomized = grid[int(random.random()*40)][int(random.random()*40)]
+start = grid[0][0]  # Start can be randomized = grid[int(random.random()*40)][int(random.random()*40)]
 end = grid[size - 1][size - 1]      # Destination can be randomized = grid[int(random.random()*40)][int(random.random()*40)]
 grid[0][0].wall = False
 grid[0][0].altitud = False
@@ -152,6 +159,7 @@ grid[size - 1][size - 1].recharge = False
 
 # Adding the start point to the open_set
 openSet.append(start)
+start.f = heuristic(start, end)
 drone = Drone(1,1,1)
 
 """
@@ -180,31 +188,39 @@ loop = True
 while loop:
     if (drone.battery>0 and drone.time>0):
             if len(openSet) > 0:
-                winner = 0
-                for i in range(len(openSet)):
-                    if openSet[i].utility > openSet[winner].utility:
-                        winner = i 
-                        drone.move(openSet[winner].i,openSet[winner].j,openSet[winner].bat,openSet[winner].tim,openSet[winner].f)
-                        #print(openSet[winner].bat)
+                winner = 0    
+                for p in range(len(openSet)):
+                    if openSet[p].utility > openSet[winner].utility:
+                        winner = p
+                        
                         #print(openSet[winner].recharge,openSet[winner].altitud,openSet[winner].wall,openSet[winner].crow,openSet[winner].interf) 
-                       # vis_grid[drone.i][drone.j]=4.6
+                        #vis_grid[drone.i][drone.j]=4.6
                         #im.set_data(vis_grid)
                         #plt.pause(0.000001)
                         #plt.draw()       
 
                 current = openSet[winner]
-
+                #print(current.tim)
+                drone.move(current.i,current.j,current.bat,current.tim,current.f)
+                #print(current.utility)
+               
                 # Path found
                 if current == end:
                     current.set = 8
                     temp = current.f
                     while current.parent:
                         current.parent.set = 16
+                        WeibaValues.append(current.weiba)
+                        WeitaValues.append(current.weita)
+                        TimeValues.append(current.tim)
+                        print(current.value)
+                        BatteryValues.append(current.bat)
                         current = current.parent
-                    print('The program finished, the length of the path is ' + str(temp*70) + ' blocks away \n')
+                    print('The program finished, the length of the path is ' + str(round(temp*start.f,0)) + ' blocks away \n')
                     print('The program finished, the Drone battery is '+ str(drone.battery)  + '\n the time remaining is ' + str(drone.time))
 
                     loop = False
+                    ShowGraphic(WeibaValues,WeitaValues,TimeValues,BatteryValues)
 
                 # Remove the evaluated point from open_set and add to closed set
                 openSet.pop(winner)
@@ -215,18 +231,10 @@ while loop:
                 for neighbor in neighbors:
                     if neighbor not in closedSet:
                         if not neighbor.wall :
-                            curbat = drone.battery
-                            curtime= drone.time
-                            weight= Weight(drone)
+
                             temp_g = current.g + 1              
                             new_path = False
-                            neighbor.bat =  round(curbat - 0.01,2)
-                            neighbor.tim = round(curtime - 0.009,2)
-                            if neighbor.recharge:
-                                
-                                neighbor.bat = 1
-                                neighbor.tim = round(curtime - 0.05,2)
-                                                        
+
                             if neighbor in openSet:
                                 if temp_g < neighbor.g:
                                     neighbor.g = temp_g    
@@ -240,11 +248,27 @@ while loop:
                             if new_path:
                                 neighbor.h = heuristic(neighbor, end)
                                 neighbor.f = neighbor.g + neighbor.h
-                                NormDis = round(neighbor.f/70,2)
+                                NormDis = round(neighbor.f/start.f,2)
                                 neighbor.f = 2-NormDis
-                                neighbor.utility = UtilityFunc(neighbor.value,neighbor.bat,neighbor.tim,neighbor.f,weight)
-                                #print(neighbor.utility)
+                                
                                 neighbor.parent = current    
+                                parne = neighbor.parent
+                                curbat = parne.bat
+                                curtime = parne.tim 
+
+                                neighbor.bat = round(curbat - 0.01,2)
+                                neighbor.tim = round((curtime - 0.004),3)
+                            
+                                if neighbor.recharge:
+                                
+                                    neighbor.bat = 1
+                                    neighbor.tim = round(curtime - 0.05,2)
+
+                                weight= Weight(neighbor.bat,neighbor.tim)
+                                neighbor.weiba = round(weight[0],2)
+                                neighbor.weita = round(weight[1],2)
+
+                                neighbor.utility = UtilityFunc(neighbor.value,neighbor.bat,neighbor.tim,neighbor.f,weight)
 
             # Path not Found
             else:
