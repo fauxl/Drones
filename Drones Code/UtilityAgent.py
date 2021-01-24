@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
-import numpy as np
+
 import random
 import math
+
 
 #import Route
 
@@ -56,12 +57,13 @@ class UtilityAgent:
 """
       
 class Drone:
-        def __init__(self,battery,time,distance):
-                self.i = 0
-                self.j = 0
+        def __init__(self,battery,time,distance,i,j,beam):
+                self.i = i
+                self.j = j
+                self.beam = beam
                 self.battery = battery
                 self.time = time
-                self.distance = distance #per funzione di ottimizazzione parte da 1 e arriva a 0
+                self.distance = distance
         
         def move(self,i,j,battery, time, distance):
                 self.i = i
@@ -69,7 +71,23 @@ class Drone:
                 self.battery = battery
                 self.time = time
                 self.distance = distance
+
+        def getPos(self):
+                return self.i,self.j
+
+               
                 #print(self.i,self.j,self.battery,self.time,self.distance)
+
+                
+class Signal:
+        def __init__(self,idrone,jdrone,beam,intensity):
+                self.idrone = idrone
+                self.jdrone = jdrone
+                self.beam = beam
+                self.intensity = intensity
+
+        def propagation(self,i,j,beam):
+                self.intensity = beam
 
 def Weight(battery,time):
         weiba = (2-battery)*0.35

@@ -1,10 +1,10 @@
+
 import matplotlib.pyplot as plt
+import numpy as np
 import random
 import math
-import matplotlib as mpl
 
 from UtilityAgent import *
-
 from Graphics import *
 
 # Usually data model for maps is G(N,E) 
@@ -36,7 +36,6 @@ print (RoadId)
 plt.show()
 """
 
-
 # A* alghoritm first version, to be optimized and revised
 
 # Creating a class 'spot' which would be like a node on the screen
@@ -54,9 +53,14 @@ class spot:
         self.utility=0
         self.weiba = 0
         self.weita = 0
+        self.signeed = random.uniform(0.0,1.0)
+        self.intervalue = 0
 
         self.parent = None          # To trace back the path, we need to record parents
         self.wall = False           # spot obstacle set false
+        self.isdrone = False
+        self.signal = False
+        self.path=False
         self.crow = False
         self.recharge = False
         self.interf = False
@@ -64,7 +68,7 @@ class spot:
 
         self.neighbors = []         # list of neighbors of a spot              
        
-        if random.random() < 0.001:   # Percentage of recharge zone
+        if random.random() < 0.002:   # Percentage of recharge zone
             if self.value==1:
                 self.recharge = True
                 self.value=0.9
@@ -73,11 +77,6 @@ class spot:
             if self.value==1:
                 self.altitud= True
                 self.value=0.7
-
-        if random.random() < 0.099:   # Percentage of intereferences zone
-            if self.value==1:
-                self.interf= True
-                self.value=0.3
 
         if random.random() < 0.2:   # Percentage of obstacles or not linked spots generated randomly
             if self.value==1:
@@ -88,7 +87,6 @@ class spot:
             if self.value==1:
                 self.crow = True
                 self.value=0.5
-
 
     # Neighbor spot adding
     def add_neighbors(self, grid_passed):
@@ -111,20 +109,73 @@ class spot:
         if i > 0 and j > 0:
             self.neighbors.append(grid_passed[i - 1][j - 1])
 
+def SetSignal(grid,d1,beam):
+    X = beam # R is the radius
+    for x in range(-X,X+1):
+        Y = int((beam*beam-(x*x))**0.5) # bound for y given x
+        for y in range(d1.j-Y,d1.j+Y+1):
+            grid[d1.i+x][y].interf = True
+            grid[d1.i+x][y].value = 0.3
+            grid[d1.i+x][y].wall = False
+            grid[d1.i+x][y].recharge = False
+            grid[d1.i+x][y].crow= False
+            grid[d1.i+x][y].altitud= False
+
 size = 100
 grid = []
 openSet = []
+distance = 8
 closedSet = []
 BatteryValues = []
 TimeValues = []
 WeibaValues = []
 WeitaValues = []
 
+d1i = random.randint(20, 70)
+d1j = random.randint(20, 80)
+
+d2i = d1i + distance
+d2j = d1j + distance
+
+d3i = d1i + distance
+d3j = d1j - distance
+
+d4i =  d1i + distance*2
+d4j = d1j 
+
+drone = Drone(1,1,1,0,0,7)
+drone1 = Drone(1,1,1,d1i,d1j,7)
+drone2 = Drone(1,1,1,d2i,d2j,7)
+drone3 = Drone(1,1,1,d3i,d3j,7)
 
 # Heuristic Euclidean Distance
 def heuristic(a, b):                                   
     dist = math.sqrt((a.i - b.i)**2 + (a.j - b.j)**2)
     return dist
+
+def checkInter(grid):
+    if(grid[i][j].interavalue>0):
+        return True
+
+
+# Setting drone signal based on distance and setting value and signal need of the spots covered by it
+def Distance(grid,i,j):
+    if(0<heuristic(grid[i][j],grid[d1i][d1j])<= drone1.beam):
+        grid[i][j].intervalue = grid[i][j].intervalue + 1/heuristic(grid[i][j],grid[d1i][d1j])
+        grid[i][j].signeed -= grid[i][j].intervalue
+        grid[i][j].value = 1-grid[i][j].intervalue
+    if(0<heuristic(grid[i][j],grid[d2i][d2j])<= drone2.beam):
+        grid[i][j].intervalue = grid[i][j].intervalue +1/heuristic(grid[i][j],grid[d2i][d2j])
+        grid[i][j].signeed -= grid[i][j].intervalue
+        grid[i][j].value = 1-grid[i][j].intervalue
+    if(0<heuristic(grid[i][j],grid[d3i][d3j])<= drone3.beam):
+        grid[i][j].intervalue= grid[i][j].intervalue +1/heuristic(grid[i][j],grid[d3i][d3j])   
+        grid[i][j].signeed -= grid[i][j].intervalue
+        grid[i][j].value = 1-grid[i][j].intervalue
+    if(0<heuristic(grid[i][j],grid[d4i][d4j])<= drone.beam):
+        grid[i][j].intervalue = grid[i][j].intervalue +1/heuristic(grid[i][j],grid[d4i][d4j])   
+        grid[i][j].signeed -= grid[i][j].intervalue
+        grid[i][j].value = 1-grid[i][j].intervalue
 
 # Making a grid
 for i in range(size):
@@ -141,25 +192,29 @@ for i in range(size):
     for j in range(size):
         grid[i][j].add_neighbors(grid)
 
-        
-start = grid[0][0]  # Start can be randomized = grid[int(random.random()*40)][int(random.random()*40)]
-end = grid[size - 1][size - 1]      # Destination can be randomized = grid[int(random.random()*40)][int(random.random()*40)]
-grid[0][0].wall = False
-grid[0][0].altitud = False
-grid[0][0].crow= False
-grid[0][0].interf = False
-grid[0][0].recharge = False
+SetSignal(grid,drone1,drone1.beam)
+SetSignal(grid,drone2,drone2.beam)
+SetSignal(grid,drone3,drone3.beam)
+grid[drone1.i][drone1.j].isdrone=True
+grid[drone2.i][drone2.j].isdrone=True
+grid[drone3.i][drone3.j].isdrone=True
 
+# Filling Network
+for i in range(size):
+    for j in range(size):
+        Distance(grid,i,j)
+        #print(grid[i][j].signeed)
+
+
+start = grid[0][0]                  # Start can be randomized = grid[int(random.random()*40)][int(random.random()*40)]
+end = grid[d4i][d4j]      # Destination can be randomized = grid[int(random.random()*40)][int(random.random()*40)]
+grid[0][0].wall = False
 grid[size - 1][size - 1].wall = False       
-grid[size - 1][size - 1].altitud = False
-grid[size - 1][size - 1].crow= False
-grid[size - 1][size - 1].interf = False
-grid[size - 1][size - 1].recharge = False
 
 # Adding the start point to the open_set
 openSet.append(start)
 start.f = heuristic(start, end)
-drone = Drone(1,1,1,0,0,0)
+
 
 """
 # Visualization debugging
@@ -199,22 +254,21 @@ while loop:
                         #plt.draw()       
 
                 current = openSet[winner]
-                #print(current.tim)
                 drone.move(current.i,current.j,current.bat,current.tim,current.f)
-                #print(current.utility)
                
                 # Path found
                 if current == end:
+                    grid[i][j].isdrone == True
                     current.set = 8
                     temp = current.f
                     while current.parent:
-                        current.parent.set = 16
+                        current.parent.set = 60
                         WeibaValues.append(current.weiba)
                         WeitaValues.append(current.weita)
                         TimeValues.append(current.tim)
-                        print(current.utility)
                         BatteryValues.append(current.bat)
                         current = current.parent
+                    SetSignal(grid,drone,drone.beam)
                     print('The program finished, the length of the path is ' + str(round(temp*start.f,0)) + ' blocks away \n')
                     print('The program finished, the Drone battery is '+ str(drone.battery)  + '\n the time remaining is ' + str(drone.time))
 
@@ -229,7 +283,7 @@ while loop:
                 neighbors = current.neighbors
                 for neighbor in neighbors:
                     if neighbor not in closedSet:
-                        if not neighbor.wall :
+                        if not neighbor.wall and not neighbor.interf :
 
                             temp_g = current.g + 1              
                             new_path = False
@@ -269,7 +323,6 @@ while loop:
 
                                 neighbor.utility = UtilityFunc(neighbor.value,neighbor.bat,neighbor.tim,neighbor.f,weight)
 
-
             # Path not Found
             else:
                 current.set = 12
@@ -294,20 +347,27 @@ start.set = 80
 end.set = 80
 for i in range(size):
     for j in range(size):
-        if grid[i][j].wall:
-            vis_grid[i][j] =  grid[i][j].set - 30
-        elif grid[i][j].altitud:
-            vis_grid[i][j] =  grid[i][j].set - 10
-        elif grid[i][j].crow:
-            vis_grid[i][j] = grid[i][j].set - 20
-        elif grid[i][j].interf:
-            vis_grid[i][j] = grid[i][j].set - 40
-        elif grid[i][j].recharge:
-            vis_grid[i][j] = grid[i][j].set + 60
-        else:
-            vis_grid[i][j] = grid[i][j].set
+        vis_grid[i][j] = grid[i][j].set
+        if grid[i][j].recharge:
+                vis_grid[i][j] = grid[i][j].set + 60
+        if grid[i][j].set != 60:
+            if grid[i][j].wall:
+                vis_grid[i][j] =  grid[i][j].set - 30
+            elif grid[i][j].altitud:
+                vis_grid[i][j] =  grid[i][j].set - 10
+            elif grid[i][j].crow:
+                vis_grid[i][j] = grid[i][j].set - 20
+            elif grid[i][j].isdrone:
+                vis_grid[i][j] = grid[i][j].set + 30
+            elif grid[i][j].interf:    
+                vis_grid[i][j] = grid[i][j].intervalue*30+20
+
+        
+
 
 plt.figure(figsize =(8, 7))
 plt.title('A* Algorithm with Utility - Shortest Path Finder\n')
 plt.imshow(vis_grid)
 plt.show()
+
+
