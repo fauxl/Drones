@@ -53,10 +53,13 @@ class GraphEnv:
         return dist
 
     def PutDrones(self):
-        distance = 8
+        distance = 5 #8
         size = self.size
-        d1i = 22
-        d1j = 28
+        d1i = 7
+        d1j = 10
+
+        #d1i = random.randint(20, 40)
+        #d1j = random.randint(20, 40)
 
         d2i = d1i + distance
         d2j = d1j + distance
@@ -67,10 +70,10 @@ class GraphEnv:
         d4i =  d1i + distance*2
         d4j = d1j 
 
-        drone = Drone(1,1,1,0,0,5)
-        drone1 = Drone(1,1,1,d1i,d1j,6)
-        drone2 = Drone(1,1,1,d2i,d2j,6)
-        drone3 = Drone(1,1,1,d3i,d3j,6)
+        drone = Drone(1,1,1,0,0,4)
+        drone1 = Drone(1,1,1,d1i,d1j,4)
+        drone2 = Drone(1,1,1,d2i,d2j,4)
+        drone3 = Drone(1,1,1,d3i,d3j,4)
 
         self.grid[d1i][d1j].isdrone=True
         self.grid[d2i][d2j].isdrone=True
@@ -86,22 +89,23 @@ class GraphEnv:
                 if(0<heuristic(self.grid[i][j],self.grid[d1i][d1j])<= drone1.beam):
                     self.grid[i][j].intervalue += 1/heuristic(self.grid[i][j],self.grid[d1i][d1j])
                     self.grid[i][j].signeed -= self.grid[i][j].intervalue
-                    self.grid[i][j].value = 1-self.grid[i][j].intervalue
+                    self.grid[i][j].value = 1
                 if(0<heuristic(self.grid[i][j],self.grid[d2i][d2j])<= drone2.beam):
                     self.grid[i][j].intervalue += 1/heuristic(self.grid[i][j],self.grid[d2i][d2j])
                     self.grid[i][j].signeed -= self.grid[i][j].intervalue
-                    self.grid[i][j].value = 1-self.grid[i][j].intervalue
+                    self.grid[i][j].value = 2
                 if(0<heuristic(self.grid[i][j],self.grid[d3i][d3j])<= drone3.beam):
                     self.grid[i][j].intervalue += 1/heuristic(self.grid[i][j],self.grid[d3i][d3j])   
                     self.grid[i][j].signeed -= self.grid[i][j].intervalue
-                    self.grid[i][j].value = 1-self.grid[i][j].intervalue
-                if(0<heuristic(self.grid[i][j],self.grid[d4i][d4j])<= drone.beam):
-                    self.grid[i][j].intervalue += 1/heuristic(self.grid[i][j],self.grid[d4i][d4j])   
-                    self.grid[i][j].signeed -= self.grid[i][j].intervalue
-                    self.grid[i][j].value = 1-self.grid[i][j].intervalue
+                    self.grid[i][j].value = 3
                 if(self.grid[i][j].intervalue>0):
                     print(i,j,self.grid[i][j].intervalue)
-    
+
+                if 0.1<self.grid[i][j].intervalue<=0.33:
+                    self.grid[i][j].signeed
+        return d4i, d4j
+
+
     def GetSpotValue(self,i,j):
         return self.grid[i][j].value
 
@@ -135,14 +139,16 @@ class GraphEnv:
             for j in range(self.size):
                 if  self.grid[i][j].wall:
                     vis_grid[i][j] =  self.grid[i][j].set - 30
+                elif self.grid[i][j].recharge:
+                    vis_grid[i][j] = self.grid[i][j].set + 60
                 elif self.grid[i][j].path:
                     vis_grid[i][j] =  80 
+                elif self.grid[i][j].path and self.grid[i][j].recharge:
+                    vis_grid[i][j] =  20 
                 elif self.grid[i][j].altitud:
                     vis_grid[i][j] =  self.grid[i][j].set - 10
                 elif self.grid[i][j].crow:
                     vis_grid[i][j] = self.grid[i][j].set - 20
-                elif self.grid[i][j].recharge:
-                    vis_grid[i][j] = self.grid[i][j].set + 60
                 elif self.grid[i][j].isdrone:
                     vis_grid[i][j] = self.grid[i][j].set + 30
                 elif self.grid[i][j].interf:    
@@ -200,10 +206,10 @@ def ShowGraphic(weiba,weita,time,battery):
     battery = battery[::-1]
     time = time[::-1]
 
-    print(weiba,battery,weita,time)
-            
+    #print(weiba,battery,weita,time)
+    filename = 'img/TradeOffBatteryTime.png'
+        
     plt.subplot(2,1,1)
-    plt.title('Weight Tradeoff battery/time')
     plt.ylabel('Battery')
     plt.plot(weiba,battery)
             
@@ -211,3 +217,38 @@ def ShowGraphic(weiba,weita,time,battery):
     plt.ylabel('Time')
     plt.xlabel('Weight')
     plt.plot(weita,time)
+    plt.savefig(filename)
+    plt.show()
+
+def plotLearning(x, scores, epsilons, filename, lines=None):
+    fig=plt.figure()
+    ax=fig.add_subplot(111, label="1")
+    ax2=fig.add_subplot(111, label="2", frame_on=False)
+
+    ax.plot(x, epsilons, color="C3")
+    ax.set_xlabel("Game", color="C3")
+    ax.set_ylabel("Epsilon", color="C3")
+    ax.tick_params(axis='x', colors="C1")
+    ax.tick_params(axis='y', colors="C1")
+
+    N = len(scores)
+    running_avg = np.empty(N)
+    for t in range(N):
+	    running_avg[t] = np.mean(scores[max(0, t-20):(t+1)])
+
+    ax2.scatter(x, running_avg, color="C1")
+
+    ax2.axes.get_xaxis().set_visible(False)
+    ax2.yaxis.tick_right()
+
+    ax2.set_ylabel('Score', color="C3")
+
+    ax2.yaxis.set_label_position('right')
+
+    ax2.tick_params(axis='y', colors="C1")
+
+    if lines is not None:
+        for line in lines:
+            plt.axvline(x=line)
+
+    plt.savefig(filename)

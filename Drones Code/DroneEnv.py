@@ -17,13 +17,13 @@ class DroneEnv(gym.Env):
     Source:
         Thesis project on drone path planning
     Observation:
-        Type: Box(5)
+        Type: Box(3)
         Num     Observation               Min                    Max
         0       Battery                     0                     1
         1       Drone i pos                 0                    size-1
         2       Drone j pos                 0                    size-1
-        3       Time                        0                       1
-        4       Distance                    0                    func calc
+
+
     Actions:
         Type: Discrete(8)
         Num   Action
@@ -55,16 +55,23 @@ class DroneEnv(gym.Env):
         self.state = None
         self.drone = Drone(1,1,1,0,0,0)
         self.size = size
-        self.state_size = 5
+        self.desi = self.size-1
+        self.desj = self.size-1
+        self.state_size = 3
         
         self.grid = GraphEnv(self.size,[])
-        #self.grid.PutDrones()
+        #des = self.grid.PutDrones()
         #GraphEnv.SetDroneSignal(self.grid)
 
-        self.startdis = self.grid.heuristic(0,0,self.size-1,self.size-1)
+        #self.desi = des[0]
+        #self.desj = des[1]
 
-        low = np.array([0,0,0,0,0])
-        high = np.array([1,self.size-1,self.size-1,1,1])
+        self.startdis = self.grid.heuristic(0,0,self.desi,self.desj)
+        self.startdisi = self.grid.heuristic(0,0,0,self.desj)
+        self.startdisj = self.grid.heuristic(0,0,self.desi,0)
+
+        low = np.array([0,0,0])
+        high = np.array([1,self.size-1,self.size-1])
 
         self.observation_space = spaces.Box(low, high, dtype=np.float32)
 
@@ -76,15 +83,14 @@ class DroneEnv(gym.Env):
         return [seed]
 
     def outbounds(self,i,j):
-        if(i>self.size-1 or j>self.size-1):
+        if(i>self.size-1 or j>self.size-1 or i<0 or j<0):
             return True
-        elif(i<0 or j<0):
-            return True
+
         else:
             return False
 
     def checkover(self):
-        if(self.drone.battery<0.03 or self.drone.time <0.03):
+        if(self.drone.battery<0.02 or self.drone.time <0.02):
             return True
         else:
             return False
@@ -108,43 +114,88 @@ class DroneEnv(gym.Env):
         battery =  round(self.drone.battery- 0.01,2)
         time =  round(self.drone.time- 0.004,3)
 
-        dis = self.grid.heuristic(i,j,self.size-1,self.size-1)
+        dis = self.grid.heuristic(i,j,self.desi,self.desj)
+        disi = self.grid.heuristic(i,j,0,self.size-1)
+        disj = self.grid.heuristic(i,j,self.size-1,0)
+
         dis= round(dis/self.startdis,2)
+        disi= round(disi/self.startdisi,2)
+        disj= round(disj/self.startdisj,2)
+
         distance = 2-dis
+        disi =  2-disi
+        disj= 2-disj
 
         #print(distance)
         weight= Weight(self.drone.battery,self.drone.time)
-        #print(distance)
         #reward = self.grid.GetSpotValue(i,j)*distance
     
-        reward =   UtilityFunc(self.grid.grid[i][j].value,battery,time,distance,weight)
+        reward =   UtilityFunc(1,battery,time,distance,weight)
+
+        
+        if disi+0.05<dis or disj+0.05<dis:
+            #print(i,j)
+            reward = 0
+
+        #print(dis,disi,disj)
 
         return battery,time, distance, reward
+
+    # Mocke movemets to check if the drone will be outside the map
+    def try_step(self, action):
+
+        pos = self.drone.getPos()
+        newi = pos[0]
+        newj = pos[1]
+
+
+        if (action==0):
+                    
+            newi = pos[0]
+            newj = pos[1]+1
+
+        elif (action == 1):
+
+            newi = pos[0]
+            newj = pos[1]-1
+
+        elif (action == 2):
+
+            newi = pos[0]-1
+            newj = pos[1]
+
+        elif (action == 3):
+
+            newi = pos[0]+1
+            newj = pos[1]
+
+        elif (action == 4):
+
+            newi = pos[0]-1
+            newj = pos[1]+1
+
+        elif (action == 5):
+
+            newi = pos[0]-1
+            newj = pos[1]-1
+
+        elif (action == 6):   
+                
+            newi = pos[0]+1
+            newj = pos[1]+1
+
+        elif (action == 7):      
+                
+            newi = pos[0]+1
+            newj = pos[1]-1
+
+        
+        return newi, newj
+
 
 
     def step(self, action):
 
-        """
-        ob, reward, episode_over, info : tuple
-            ob (object) :
-                an environment-specific object representing your observation of
-                the environment.
-            reward (float) :
-                amount of reward achieved by the previous action. The scale
-                varies between environments, but the goal is always to increase
-                your total reward.
-            episode_over (bool) :
-                whether it's time to reset the environment again. Most (but not
-                all) tasks are divided up into well-defined episodes, and done
-                being True indicates the episode has terminated. (For example,
-                perhaps the pole tipped too far, or you lost your last life.)
-            info (dict) :
-                 diagnostic information useful for debugging. It can sometimes
-                 be useful for learning (for example, it might contain the raw
-                 probabilities behind the environment's last state change).
-                 However, official evaluations of your agent are not allowed to
-                 use this for learning. 
-        """
         pos = self.drone.getPos()
         val = ""   
         info = 0
@@ -191,8 +242,8 @@ class DroneEnv(gym.Env):
                 
             newi = pos[0]+1
             newj = pos[1]-1
-
-        self.state = (self.drone.battery,pos[0],pos[1],self.drone.time,self.drone.distance)
+        
+        self.state = (self.drone.battery,pos[0],pos[1])
 
         #check if  next spot is in the grid 
         if not self.outbounds(newi,newj):  
@@ -200,70 +251,75 @@ class DroneEnv(gym.Env):
             #compute the new values of battery, time, distance and reward
             val = self.evalue(newi,newj)
 
+            if self.grid.GetPath(newi,newj):
+                reward = 0
+
             #check the kind of spot and change reward and state accordingly
             if self.checkrecharge(newi,newj):
                 reward = 0
+                battery =  1
+                time = round(self.drone.time - 0.1,2)
+                self.drone.move(newi,newj,battery,time,val[2])
+                self.state = (battery,newi,newj)
                 weight= Weight(self.drone.battery,self.drone.time)
                 if(weight[0]>weight[1] and weight[0]>=0.332):
-                    battery =  1
-                    time = round(self.drone.time - 0.05,2)
                     self.drone.move(newi,newj,battery,time,val[2])
-                    self.state = (battery,newi,newj,time,val[2])
-                    reward = 80*self.grid.grid[newi][newj].important
+                    self.state = (battery,newi,newj)
+                    self.grid.SetPath(newi,newj)
+
+                    reward = 5
                 #print(reward,weight[0])
 
             elif self.checkwall(newi,newj):
-                reward = 0
+                reward = 0.1
                 self.done = False
 
             else:
                 #print("hegh") 
                 self.drone.move(newi,newj,val[0],val[1],val[2])
-                self.state = (val[0],newi,newj,val[1],val[2])
+                self.state = (val[0],newi,newj)
                 self.grid.SetPath(newi,newj)
-
-                reward = val[3]*self.grid.grid[newi][newj].important
+                reward = val[3]
                 #print(newi,newj)
 
             #check if the drone is arrived at the goal or the battery/time is elapsed
             if  self.checkover():
                 self.done = True
                 info = -1
-                reward = -5*self.grid.grid[newi][newj].important
+                reward = -1
+                #print(self.desi,self.desj)
+                
                 #print(" ",self.drone.battery,self.drone.time)
 
-            elif (newi == self.size-1 == newj):
+            elif (newi == self.desi and self.desj == newj):
                 self.done = True
-                reward = (100+10*self.drone.battery)*self.grid.grid[newi][newj].important
+                reward = (220+10*self.drone.battery+10*self.drone.time)*self.grid.grid[newi][newj].important
                 info = 1
                 print("\nDone",self.drone.battery,self.drone.time,self.drone.i,self.drone.j)
                
-               
-                for i in range (self.size):
-                    for j in range (self.size):
-                        if self.grid.GetPath(i,j):
-                            self.grid.grid[i][j].important += 1
 
         else:
             #print("hello") 
             #print(newi,newj)
-            reward = 0
-            self.done = False
+            reward = -5
+            self.done = True
 
         #check observation with the new state
         observation = np.array(self.state)
         
+        #print(self.drone.i,self.drone.j,self.grid.grid[self.drone.i][self.drone.j].value)
+
         return observation, reward, self.done, info
 
     #reset the grid for the next execution
     def reset(self):      
         self.done = False
         self.drone = Drone(1,1,1,0,0,0)
-        low = np.array([0,0,0,0,0])
-        high = np.array([1,self.size-1,self.size-1,1,1])
+        low = np.array([0,0,0])
+        high = np.array([1,self.size-1,self.size-1])
 
         self.observation_state = spaces.Box(np.float32(low), np.float32(high), dtype=np.float32)
-        self.state = (1,0,0,1,1)
+        self.state = (1,0,0)
         observation = np.array(self.state)
 
         self.grid = GraphEnv.ResetView(self.grid)
@@ -273,14 +329,16 @@ class DroneEnv(gym.Env):
     #render the grid
     def render(self, mode='human'):
 
-        fig = plt.figure(figsize=(11, 7))
-        timer = fig.canvas.new_timer(interval = 300) #creating a timer 
-        timer.add_callback(close_event)
-        plt.title("Griglia")
+        filename = 'img/DroneRouteUtilityRL.png'
+
+        fig = plt.figure(figsize=(8, 7))
+        #timer = fig.canvas.new_timer(interval = 300) #creating a timer 
+        #timer.add_callback(close_event)
+        plt.title("RL Algorithm with DQN and Utility as Reward")
         #print("we")
         plt.imshow(self.grid.ShowGrid())
-        plt.axis("off")
-
+        plt.axis("off")        
+        plt.savefig(filename)
         #timer.start()
         plt.show()
         

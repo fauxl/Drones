@@ -3,9 +3,6 @@ import matplotlib.pyplot as plt
 import random
 import math
 
-
-#import Route
-
 """
 Spots type on the map	(DECIDE)       Normalized Utility Scores Base         Probability of presence on the map
 
@@ -78,17 +75,6 @@ class Drone:
                
                 #print(self.i,self.j,self.battery,self.time,self.distance)
 
-                
-class Signal:
-        def __init__(self,idrone,jdrone,beam,intensity):
-                self.idrone = idrone
-                self.jdrone = jdrone
-                self.beam = beam
-                self.intensity = intensity
-
-        def propagation(self,i,j,beam):
-                self.intensity = beam
-
 def Weight(battery,time):
         weiba = (2-battery)*0.35
         weita = (2-time)*0.35
@@ -108,25 +94,3 @@ def UtilityFunc(kind,battery,time,distance,weight):
         eu = world*kind
         return round(eu,2)
 
-
-"""
-1. Imposta le variabili di prova per lo stato corrente.
-2. Per ogni possibile valore del nodo di decisione:
-a. assegna tale valore al nodo di decisione;
-b. calcola le probabilità a posteriori dei nodi genitori del nodo di
-utilità con un algoritmo standard di inferenza probabilistica;
-c. calcola l’utilità risultante dell’azione.
-3. Restituisci l’azione con utilità più alta.
-
-
-int node = #a seconda del valore asssegnato si indica una delle tipologie di celle
- probgen
-utility
-start = True
-       while (start) {
-               if (utility<newutility)
-                        utility = newutility 
-       } 
-
-
-"""""

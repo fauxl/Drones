@@ -46,19 +46,19 @@ class DroneSignalEnv(gym.Env):
 
     def __init__(self,size):
         self.done = False
-        self.starti = 17
-        self.startj = 23   
+        self.starti = 0
+        self.startj =0  
         self.state = None
         self.ok = 0
         self.size = size
-        self.state_size = 2
+        self.state_size = 3
         self.drone = Drone(1,1,1,self.starti,self.startj,0)
 
         self.grid = GraphEnv(self.size,[])
         self.grid.PutDrones()
 
-        low = np.array([self.starti,self.startj])
-        high = np.array([self.size-1,self.size-1])
+        low = np.array([0,0])
+        high = np.array([19,19])
 
         self.observation_space = spaces.Box(low, high, dtype=np.float32)
 
@@ -66,9 +66,7 @@ class DroneSignalEnv(gym.Env):
        # self.observation_state = spaces.Box(low, high, dtype=np.float32)
 
     def outbounds(self,i,j):
-        if(i>=self.size-1 or j>=self.size-1):
-            return True
-        elif(i<0 or j<0):
+        if(i>self.size-1 or j>self.size-1 or i<0 or j<0):
             return True
         else:
             return False
@@ -82,18 +80,72 @@ class DroneSignalEnv(gym.Env):
             return True
 
     def checkSignal(self,i,j):
-        if 0<self.grid.grid[i][j].intervalue<=0.25 :
+        if 0.1<self.grid.grid[i][j].intervalue<=0.31:
+            return True
+    
+    def checkSignal2(self,i,j):
+        if self.grid.grid[i][j].intervalue>=0.33:
+            return True
+
+    def checkSignal3(self,i,j):
+        if 0.31<self.grid.grid[i][j].intervalue<=0.329:
             return True
 
     def evalue(self,i,j):
 
-        if not self.outbounds(i,j):
+        reward = -1
 
-            reward = 0.02
+        return reward
 
-            return reward
+    def try_step(self, action):
 
-        return False
+        pos = self.drone.getPos()
+        newi = pos[0]
+        newj = pos[1]
+
+
+        if (action==0):
+                    
+            newi = pos[0]
+            newj = pos[1]+1
+
+        elif (action == 1):
+
+            newi = pos[0]
+            newj = pos[1]-1
+
+        elif (action == 2):
+
+            newi = pos[0]-1
+            newj = pos[1]
+
+        elif (action == 3):
+
+            newi = pos[0]+1
+            newj = pos[1]
+
+        elif (action == 4):
+
+            newi = pos[0]-1
+            newj = pos[1]+1
+
+        elif (action == 5):
+
+            newi = pos[0]-1
+            newj = pos[1]-1
+
+        elif (action == 6):   
+                
+            newi = pos[0]+1
+            newj = pos[1]+1
+
+        elif (action == 7):      
+                
+            newi = pos[0]+1
+            newj = pos[1]-1
+
+        
+        return newi, newj
 
     def step(self, action):
 
@@ -123,128 +175,140 @@ class DroneSignalEnv(gym.Env):
         info = 0
         newi = pos[0]
         newj = pos[1]
+        end = True
 
         if (action==0):
                 
             newi = pos[0]
             newj = pos[1]+1
-            val = self.evalue(newi,newj)
-
-                
+     
         elif (action == 1):
 
             newi = pos[0]
             newj = pos[1]-1
-            val = self.evalue(newi,newj)
 
         elif (action == 2):
 
             newi = pos[0]-1
             newj = pos[1]
-            val = self.evalue(newi,newj)
 
         elif (action == 3):
 
             newi = pos[0]+1
             newj = pos[1]
-            val = self.evalue(newi,newj)
 
         elif (action == 4):
 
             newi = pos[0]-1
             newj = pos[1]+1
-            val = self.evalue(newi,newj)
 
         elif (action == 5):
 
             newi = pos[0]-1
             newj = pos[1]-1
-            val = self.evalue(newi,newj)
 
         elif (action == 6):   
             
             newi = pos[0]+1
             newj = pos[1]+1
-            val = self.evalue(newi,newj)
 
         elif (action == 7):      
             
             newi = pos[0]+1
             newj = pos[1]-1
-            val = self.evalue(newi,newj)
 
-        if self.outbounds(newi,newj) or val==False:
-            #print("hello") 
-            #print(pos[0],pos[1])
-            self.state = (pos[0],pos[1])
-            observation = np.array(self.state)
-            reward = -50
-            self.done = True
         
-        elif self.checkrecharge(newi,newj):
-            reward = 0
-            self.state = (newi,newj)
-            self.grid.SetPath(newi,newj)
-            self.drone.move(newi,newj,self.drone.battery,self.drone.time,self.drone.distance)
-            observation = np.array(self.state)
-            #print(reward,weight[0])
+        if not self.outbounds(newi,newj):
 
-        elif self.checkwall(newi,newj):
-            self.state = (pos[0],pos[1])
-            observation = np.array(self.state)
-            reward = 0
-            self.done = False
-
-        elif self.checkSignal(newi,newj):
-            self.grid.SetPath(newi,newj)
             self.drone.move(newi,newj,self.drone.battery,self.drone.time,self.drone.distance)
             self.state = (newi,newj)
-            observation = np.array(self.state)
-            self.ok = 1
-            reward = 30
+            #print("hello") 
+            
+            if self.grid.GetPath(newi,newj) and self.checkSignal3(newi,newj):
+                reward=0.5
 
-        elif self.grid.GetPath(newi,newj):
-            self.drone.move(newi,newj,self.drone.battery,self.drone.time,self.drone.distance)
-            self.state = (newi,newj)
-            observation = np.array(self.state)
-            reward = -5
 
-        elif self.ok==0:
-            self.drone.move(newi,newj,self.drone.battery,self.drone.time,self.drone.distance)
-            self.grid.SetPath(newi,newj)
-            self.state = (newi,newj)
-            #print(newi,newj)
+            elif self.checkwall(newi,newj):
+                self.drone.move(pos[0],pos[1],self.drone.battery,self.drone.time,self.drone.distance)
+                self.state = (pos[0],pos[1])
+
+                reward = -2
+                
+            elif self.checkSignal(newi,newj):
+                self.grid.SetPath(newi,newj)
+                reward = 0
+
+            elif self.checkSignal3(newi,newj):
+                self.grid.SetPath(newi,newj)
+                self.ok =1
+                reward = 2
+
+            elif self.checkSignal2(newi,newj):
+                self.grid.SetPath(newi,newj)
+                reward = -1
+
+            else: 
+                #self.grid.SetPath(newi,newj)
+                self.grid.SetPath(newi,newj)
+                reward = -2
+                if self.ok == 1:
+                    reward=-2
+                    self.done=True
+
+
             observation = np.array(self.state)
-            reward = val
-            #print(newi,newj)
-        else : 
+
+
+            """
+            elif self.checkSignal2(newi,newj):
+                self.grid.SetPath(newi,newj)
+                self.drone.move(newi,newj,self.drone.battery,self.drone.time,self.drone.distance)
+                self.state = (newi,newj)
+                observation = np.array(self.state)
+                reward = 0   
+            """
+
+        else:  
+
             self.drone.move(pos[0],pos[1],self.drone.battery,self.drone.time,self.drone.distance)
-            self.state = (pos[0],pos[1])
-            reward = -10
-            self.done = True
+            self.state = (newi,newj)
             observation = np.array(self.state)
-
-
-        if  (newi == self.starti and newj == self.startj):
-            self.drone.move(newi,newj,self.drone.battery,self.drone.time,self.drone.distance)
-            self.done = True
-            reward = 20
-            info = 1
-            #print("\nDone",self.drone.battery,self.drone.time)
-            return observation, reward, self.done, info
-
+            reward = -10
             print(newi,newj)
+            self.done = True
 
+        
+
+
+        for i in range(self.size):
+            for j  in range(self.size):
+                if self.checkSignal3(i,j):
+                    if not self.grid.GetPath(i,j):
+                        #print(i,j)
+                        end = False
+                      
+        if (end):
+            self.done = True
+            info  = 1
+            print ('win')
+
+        """
+        if (newi==10 and newj==18):
+            info =2
+            self.ok =1
+            reward = 10
+            self.done=True
+            #print ('wino')
+        """
         return observation, reward, self.done, info
-
-
+        
     def reset(self):      
         self.done = False
         self.drone = Drone(1,1,1,self.starti,self.startj,0)
         low = np.array([0,0])
-        high = np.array([self.size-1,self.size-1])
+        high = np.array([19,19])
+        self.ok = 0
 
-        self.ok =0
         self.observation_state = spaces.Box(np.float32(low), np.float32(high), dtype=np.float32)
         self.state = (self.starti,self.startj)
         observation = np.array(self.state)
@@ -255,6 +319,8 @@ class DroneSignalEnv(gym.Env):
 
     def render(self, mode='human'):
 
+        filename = 'img/DroneInterference.png'
+
         fig = plt.figure(figsize=(11, 7))
         timer = fig.canvas.new_timer(interval = 300) #creating a timer 
         timer.add_callback(close_event)
@@ -262,14 +328,13 @@ class DroneSignalEnv(gym.Env):
         #print("we")
         plt.imshow(self.grid.ShowGrid())
         plt.axis("off")
+        plt.savefig(filename)
+        plt.show()
 
         #timer.start()
-        plt.show()
-        
-  
+
     def get_action(self, state):
-        action = random.choice(range(self.action_space.n))
-        print (action)
+        action = self.step(random.choice(range(self.action_space.n)))
 
     def _take_action(self, action):
         azione = self.step(action)      

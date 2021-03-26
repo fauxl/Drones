@@ -1,3 +1,5 @@
+
+  
 import matplotlib.pyplot as plt
 import random
 import math
@@ -20,18 +22,15 @@ PostY= []
 PostName = []
 RoadId = []
 tree = etree.parse("XMLFILE.xml")
-
 for node in tree.xpath("/osm/node"):
     PostX.append(node.attrib['lat'])  
     PostY.append(node.attrib['lon'])  
     PostName.append(node.attrib['id'])  
-
 for node in tree.xpath("/osm/way"):
     RoadId.append(int(node.attrib['id']))  
     for elements in tree.xpath("/osm/way"):
         if node.attrib['id']==elements.attrib['id']
             RoadPart
-
 print (RoadId)
 plt.show()
 """
@@ -111,7 +110,7 @@ class spot:
         if i > 0 and j > 0:
             self.neighbors.append(grid_passed[i - 1][j - 1])
 
-size = 100
+size = 50
 grid = []
 openSet = []
 closedSet = []
@@ -161,27 +160,34 @@ openSet.append(start)
 start.f = heuristic(start, end)
 drone = Drone(1,1,1,0,0,0)
 
-"""
+
 # Visualization debugging
 vis_grid = []
 for i in range(size):
     row = [0 for i in range(size)]
     vis_grid.append(row)
-
 start.set = 20
 end.set = 25
 for i in range(size):
     for j in range(size):
         if grid[i][j].wall:
-            vis_grid[i][j] = grid[i][j].set - 10
+            vis_grid[i][j] =  grid[i][j].set - 30
+        elif grid[i][j].altitud:
+            vis_grid[i][j] =  grid[i][j].set - 10
+        elif grid[i][j].crow:
+            vis_grid[i][j] = grid[i][j].set - 20
+        elif grid[i][j].interf:
+            vis_grid[i][j] = grid[i][j].set - 40
+        elif grid[i][j].recharge:
+            vis_grid[i][j] = grid[i][j].set + 60
         else:
             vis_grid[i][j] = grid[i][j].set
-
 plt.figure(figsize =(8, 7))
 plt.title('A* Algorithm - Shortest Path Finder\n')
+plt.axis("off")        
 plt.ion()
 im = plt.imshow(vis_grid)
-"""
+
 
 loop = True
 while loop:
@@ -193,10 +199,11 @@ while loop:
                         winner = p
                         
                         #print(openSet[winner].recharge,openSet[winner].altitud,openSet[winner].wall,openSet[winner].crow,openSet[winner].interf) 
-                        #vis_grid[drone.i][drone.j]=4.6
-                        #im.set_data(vis_grid)
-                        #plt.pause(0.000001)
-                        #plt.draw()       
+                        vis_grid[drone.i][drone.j]=20
+
+                        im.set_data(vis_grid)
+                        plt.pause(0.000001)
+                        plt.draw()       
 
                 current = openSet[winner]
                 #print(current.tim)
@@ -283,7 +290,7 @@ while loop:
         loop = False
         print('No path found!, the Drone battery is '+ str(drone.battery)  + '\n the time elapsed is ' + str(1-drone.time)) 
     
-
+"""
 # Visualization
 vis_grid = []
 for i in range(size):
@@ -311,3 +318,4 @@ plt.figure(figsize =(8, 7))
 plt.title('A* Algorithm with Utility - Shortest Path Finder\n')
 plt.imshow(vis_grid)
 plt.show()
+"""
